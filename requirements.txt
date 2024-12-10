@@ -1,0 +1,8 @@
+kafka-python
+pandas
+Faker 
+requests 
+pathlib
+minio
+pyarrow
+#io
