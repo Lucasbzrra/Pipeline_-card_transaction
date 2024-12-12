@@ -2,6 +2,8 @@ from minio import Minio
 from datetime import datetime
 import time
 import os
+import re
+from pathlib import Path
 
 class FileInDatalake:
 
@@ -20,6 +22,10 @@ class FileInDatalake:
         )
         file_name = os.path.basename(self.local_minio)
 
+        match = re.match(r'^(transactions_data_\d+)', Path(file_name).stem)
+        if match:
+            file_name = match.group(1)
+
         if file_name.startswith('users_data') and self.bucket_name =='rawzone':
             self.local_minio=f'trasactions_cards/users_data_{datetime.now().date()}.csv'
 
@@ -27,7 +33,7 @@ class FileInDatalake:
             self.local_minio=f'trasactions_cards/cards_data_{datetime.now().date()}.csv'
 
         if file_name.startswith('transactions_data') and self.bucket_name =='rawzone':
-            self.local_minio=f'trasactions_cards/transactions_data_{datetime.now().date()}.csv'
+            self.local_minio=f'trasactions_cards/{file_name}_{datetime.now().date()}.csv'
 
         
         if file_name.startswith('users_data') and self.bucket_name =='silverzone':
@@ -37,7 +43,7 @@ class FileInDatalake:
             self.local_minio=f'trasactions_cards/cards_data_{datetime.now().date()}.parquet'
 
         if file_name.startswith('transactions_data') and self.bucket_name =='silverzone':
-            self.local_minio=f'trasactions_cards/transactions_data_{datetime.now().date()}.parquet'
+            self.local_minio=f'trasactions_cards/{file_name}_{datetime.now().date()}.parquet'
 
 
         minio_client.fput_object(

@@ -11,7 +11,7 @@ COPY . /app/
 
 ENV PYTHONPATH=/app
 
-# Lista todos os diretórios e arquivos no container para depuração
+
 RUN ls -R /app
 
 

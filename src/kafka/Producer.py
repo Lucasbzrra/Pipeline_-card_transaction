@@ -24,7 +24,6 @@ class Producer:
 
         admin_client = KafkaAdminClient(
         bootstrap_servers=['kafka-broker-1:9092']
-        #max_request_size=1610612736
         )
         
         self.create_topic(admin_client ,self.topic_name)

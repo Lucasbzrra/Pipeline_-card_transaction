@@ -48,7 +48,7 @@ services:
     ports:
       - "8081:8080"
     environment:
-      - KAFKA_CLUSTERS_0_NAME=alura
+      - KAFKA_CLUSTERS_0_NAME=project
       - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka-broker-1:9092,kafka-broker-2:9093
       - KAFKA_CLUSTERS_0_ZOOKEEPER=zookeeper:2181
     networks:
@@ -69,17 +69,6 @@ services:
       - ./src:/app/src
   
 
-  consumer :
-    container_name: consumer
-    build: 
-     context: .
-     dockerfile: Dockerfile.Consumer
-    depends_on:
-      - zookeeper
-    networks:
-      - kafka-net
-    volumes:
-      - ./src:/app/src
 
   minio:
     image: 'bitnami/minio:latest'
@@ -93,6 +82,20 @@ services:
       - MINIO_ROOT_PASSWORD=kafka_espetinho
       - MINIO_ACCESS_KEY=AVcyU1dIcrfI88EqIa7p      
       - MINIO_SECRET_KEY=Wf2SYhz7K7LmsjSgFVW1Bbdtclakn98ujl66AcO4       
+    networks:
+      - kafka-net
+  
+
+  postgres:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: project
+      POSTGRES_PASSWORD: project
+      POSTGRES_DB: Dw_project
+    volumes:
+      - ./src/postgres-db-volume:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
     networks:
       - kafka-net
 

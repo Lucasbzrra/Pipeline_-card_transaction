@@ -5,4 +5,5 @@ requests
 pathlib
 minio
 pyarrow
-#io
+sqlalchemy
+psycopg2-binary

@@ -5,8 +5,8 @@ from  src.kafka.CsvWrite import CsvWrite
 
 class Consumer:
 
-    def __init__(self):
-         self.list_datas = ['users_data','cards_data','transactions_data'] 
+    def __init__(self, list_files):
+         self.list_datas = list_files
          self.list_local_files=[]
     def Consumers_data(self):
 
@@ -20,7 +20,6 @@ class Consumer:
             enable_auto_commit=True,  # Confirmação automática de mensagens processadas
             value_deserializer=lambda x: x.decode('utf-8'),
             consumer_timeout_ms=10000)
-            #fetch_message_max_bytes=1610612736 ) # Decodifica mensagens recebidas
 
             csv_write=CsvWrite(consumer_data)
 
@@ -28,6 +27,5 @@ class Consumer:
                 csv_write.write_row(message.value)
 
             file_name_temp=csv_write.close()
-            print(file_name_temp)
             self.list_local_files.append(file_name_temp)
         return self.list_local_files

@@ -13,7 +13,7 @@ class Transformations:
         self.dict_files ={}
 
     
-    def read_file(self,dir):
+    def read_file(self, dir):
         
         minio_client = Minio(
             endpoint="minio:9000",
@@ -22,17 +22,18 @@ class Transformations:
             secure=False
         )
 
-        response = minio_client.get_object(
-                    bucket_name="rawzone",
-                    object_name=f'trasactions_cards/{dir}{datetime.now().date()}.csv')
 
+        response = minio_client.get_object(
+                bucket_name="rawzone",
+                object_name=f'trasactions_cards/{dir}{datetime.now().date()}.csv')
+        
         return response
 
 
     def run(self):
        
 
-        if self.name_file and self.name_file.startswith('users_data'):
+        if  self.name_file.startswith('users_data_'):
 
             response=self.read_file('users_data_')
 
@@ -60,9 +61,9 @@ class Transformations:
             with tempfile.NamedTemporaryFile(suffix='.parquet',delete=False) as tem_file:
                 temp_path = tem_file.name
                 df.to_parquet(temp_path,engine='pyarrow', index=False)
-                self.dict_files['users_data']=temp_path
+                self.dict_files['users_data_']=temp_path
             
-        if self.name_file and self.name_file.startswith('cards_data'):
+        if self.name_file.startswith('cards_data_'):
 
             response=self.read_file('cards_data_')
 
@@ -82,7 +83,6 @@ class Transformations:
 
             df['credit_limit'] =df['credit_limit'].replace({'\$': ''}, regex=True).astype(float)
 
-            
 
             for col in ['id', 'client_id','year_pin_last_changed','num_cards_issued']:
                 df[col] = pd.to_numeric(df[col], errors='coerce')
@@ -90,18 +90,20 @@ class Transformations:
             with tempfile.NamedTemporaryFile(suffix='.parquet',delete=False) as tem_file:
                 temp_path = tem_file.name
                 df.to_parquet(temp_path,engine='pyarrow', index=False)
-                self.dict_files['cards_data']=temp_path
+                self.dict_files['cards_data_']=temp_path
 
 
-        if self.name_file and self.name_file.startswith('transactions_data'):
+        if  self.name_file.startswith('transactions_data_'):
+            
+            match = re.search(r"transactions_data_\d+_", self.name_file)
 
-            response=self.read_file('transactions_data_')
+            if match:
+                dir = match.group()  
+
+
+            response=self.read_file(dir)
 
             data = pd.read_csv(BytesIO(response.data),header=None)
-
-            print('Entrou em  transactions_data ')
-            
-            print(data)
 
             data.drop(index=0, inplace=True)
 
@@ -109,21 +111,29 @@ class Transformations:
 
             split_data = [row.split(',') for row in cleaned_data]
 
-            colunms = ['id','date','client_id','card_id','amount','use_chip','merchant_id','merchant_city','merchant_state','zip','mcc','errors']
+            for i, row in enumerate(split_data):
+                if len(row) < 12:
+                    split_data[i] = row + [''] * (12 - len(row))  # Adiciona valores vazios
+                elif len(row) > 12:
+                    split_data[i] = row[:12]  # Corta para 12 colunas
+
+            colunms = [
+            "id", "date", "client_id", "card_id", "amount", "use_chip", 
+            "merchant_id", "merchant_city", "merchant_state", "zip", 
+            "mcc", "errors"]
                 
             df = pd.DataFrame(split_data, columns=colunms)
 
             df['amount'] =df['amount'].replace({'\$': ''}, regex=True).astype(float)
 
-            print(df)
 
-            for col in ['id', 'client_id','card_id','errors']:
+            for col in ['id', 'client_id','card_id']:
                 df[col] = pd.to_numeric(df[col], errors='coerce')
 
             with tempfile.NamedTemporaryFile(suffix='.parquet',delete=False) as tem_file:
                 temp_path = tem_file.name
                 df.to_parquet(temp_path,engine='pyarrow', index=False)
-                self.dict_files['transactions_data']=temp_path   
+                self.dict_files[dir]=temp_path  
 
             
         return self.dict_files
